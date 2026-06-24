@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { runValidation, type ValidationFlag } from "@/lib/validation-service";
 import type { Extraction, LineItem } from "@/lib/extraction-schema";
 
+import ExportButtons from "./ExportButtons";
+
 const DocumentPreviewPane = dynamic(() => import("./DocumentPreviewPane"), { ssr: false });
 
 interface ReviewScreenProps {
@@ -177,6 +179,7 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
           >
             {locked ? "Approved ✓" : approving ? "Approving…" : "Approve"}
           </button>
+          <ExportButtons documentId={documentId} status={docStatus} />
         </div>
       </header>
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import ExportButtons from "@/components/ExportButtons";
 
 export default async function DocumentsPage() {
   const documents = await prisma.document.findMany({
@@ -8,7 +9,7 @@ export default async function DocumentsPage() {
   });
 
   return (
-    <main className="flex-1 p-8 max-w-4xl mx-auto w-full">
+    <main className="flex-1 p-8 max-w-5xl mx-auto w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Documents</h1>
         <Link href="/" className="text-sm underline text-gray-600">
@@ -26,6 +27,7 @@ export default async function DocumentsPage() {
               <th className="py-2">Status</th>
               <th className="py-2">Confidence</th>
               <th className="py-2">Uploaded</th>
+              <th className="py-2">Export</th>
             </tr>
           </thead>
           <tbody>
@@ -43,6 +45,9 @@ export default async function DocumentsPage() {
                     : "—"}
                 </td>
                 <td className="py-2">{doc.createdAt.toLocaleString()}</td>
+                <td className="py-2">
+                  <ExportButtons documentId={doc.id} status={doc.status} />
+                </td>
               </tr>
             ))}
           </tbody>

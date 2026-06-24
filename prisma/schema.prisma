@@ -49,6 +49,7 @@ model Document {
   pageCount   Int            @default(1)
   status      DocumentStatus @default(uploaded)
   createdAt   DateTime       @default(now())
+  approvedAt  DateTime?
   extractions Extraction[]
   exports     Export[]
 }

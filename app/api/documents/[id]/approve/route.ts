@@ -17,6 +17,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Cannot approve while error-level issues remain." }, { status: 409 });
   }
 
-  await prisma.document.update({ where: { id }, data: { status: "approved" } });
+  await prisma.document.update({ where: { id }, data: { status: "approved", approvedAt: new Date() } });
   return NextResponse.json({ status: "approved" });
 }
