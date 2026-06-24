@@ -1,0 +1,125 @@
+// Prisma schema for the GST Invoice & PO Extraction MVP.
+// Phase 1 exercises Document, Extraction, LineItem, ValidationFlag.
+// Org/User/ReviewEdit/Export are defined now so later phases don't need a migration rewrite.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Org {
+  id        String     @id @default(cuid())
+  name      String
+  createdAt DateTime   @default(now())
+  users     User[]
+  documents Document[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  orgId        String
+  org          Org      @relation(fields: [orgId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+enum DocumentStatus {
+  uploaded
+  processing
+  extracted
+  needs_review
+  approved
+  exported
+  failed
+}
+
+model Document {
+  id          String         @id @default(cuid())
+  orgId       String?
+  org         Org?           @relation(fields: [orgId], references: [id])
+  uploaderId  String?
+  fileName    String
+  filePath    String
+  mimeType    String
+  pageCount   Int            @default(1)
+  status      DocumentStatus @default(uploaded)
+  createdAt   DateTime       @default(now())
+  extractions Extraction[]
+  exports     Export[]
+}
+
+model Extraction {
+  id                String           @id @default(cuid())
+  documentId        String
+  document          Document         @relation(fields: [documentId], references: [id])
+  rawModelOutput    Json
+  parsed            Json
+  overallConfidence Float
+  modelName         String
+  createdAt         DateTime         @default(now())
+  lineItems         LineItem[]
+  flags             ValidationFlag[]
+  reviewEdits       ReviewEdit[]
+}
+
+model LineItem {
+  id           String     @id @default(cuid())
+  extractionId String
+  extraction   Extraction @relation(fields: [extractionId], references: [id])
+  serialNo     Int?
+  description  String?
+  hsnSac       String?
+  quantity     Float?
+  unit         String?
+  unitPrice    Float?
+  discount     Float?
+  taxableValue Float?
+  cgstRate     Float?
+  cgstAmount   Float?
+  sgstRate     Float?
+  sgstAmount   Float?
+  igstRate     Float?
+  igstAmount   Float?
+  cessRate     Float?
+  cessAmount   Float?
+  lineTotal    Float?
+}
+
+enum FlagSeverity {
+  error
+  warning
+}
+
+model ValidationFlag {
+  id           String       @id @default(cuid())
+  extractionId String
+  extraction   Extraction   @relation(fields: [extractionId], references: [id])
+  field        String
+  severity     FlagSeverity
+  message      String
+}
+
+model ReviewEdit {
+  id           String     @id @default(cuid())
+  extractionId String
+  extraction   Extraction @relation(fields: [extractionId], references: [id])
+  userId       String?
+  field        String
+  oldValue     String?
+  newValue     String?
+  createdAt    DateTime   @default(now())
+}
+
+model Export {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id])
+  format     String
+  filePath   String
+  createdAt  DateTime @default(now())
+}
