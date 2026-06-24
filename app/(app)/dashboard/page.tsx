@@ -77,7 +77,7 @@ export default async function DocumentsPage() {
             <p className="mt-1 text-sm text-muted">Track extraction, review, and export status.</p>
           </div>
           <Link
-            href="/"
+            href="/upload"
             className="rounded-[var(--radius)] bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
           >
             Upload new
@@ -89,7 +89,7 @@ export default async function DocumentsPage() {
             <p className="text-sm font-medium text-foreground">No documents yet</p>
             <p className="text-sm text-muted">Upload your first invoice to get started.</p>
             <Link
-              href="/"
+              href="/upload"
               className="mt-3 rounded-[var(--radius)] bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
               Upload an invoice

@@ -1,4 +1,18 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { SESSION_COOKIE } from "@/lib/session-constants";
+
 export default function RegisterPage() {
+  const router = useRouter();
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    // Demo-only: no real auth backend yet. New signups land on /upload.
+    document.cookie = `${SESSION_COOKIE}=1; path=/; max-age=2592000`;
+    router.push("/upload");
+  }
+
   return (
     <main className="flex flex-1 items-center justify-center p-8">
       <div className="card w-full max-w-sm p-8">
@@ -10,7 +24,7 @@ export default function RegisterPage() {
           <p className="text-center text-sm text-muted">Set up your organization to start extracting invoices.</p>
         </div>
 
-        <form className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="org" className="text-sm font-medium text-foreground">
               Organization name
