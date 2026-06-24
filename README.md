@@ -9,10 +9,10 @@ end. No auth, no review UI yet — just upload → extract → see the result.
 - Next.js 14+ (App Router) + TypeScript
 - Tailwind CSS
 - PostgreSQL via Prisma
-- Anthropic Claude (vision-capable model) via the official SDK, behind an `ExtractionService`
-  interface so the provider is swappable later (e.g. AWS Bedrock)
-- PDFs are sent natively to Claude as `document` content blocks — no server-side rasterization
-  needed (Claude's API accepts PDFs directly)
+- Google Gemini (vision-capable model) via the official `@google/genai` SDK, behind an
+  `ExtractionService` interface so the provider is swappable later
+- PDFs are sent natively to Gemini as inline base64 data — no server-side rasterization needed
+  (Gemini's API accepts PDFs directly)
 
 ## Setup
 
@@ -24,10 +24,12 @@ end. No auth, no review UI yet — just upload → extract → see the result.
    ```
    DATABASE_URL="postgresql://user:password@localhost:5432/gst_extract?schema=public"
    ```
-3. Set your Anthropic API key in `.env`:
+3. Set your Gemini API key in `.env`:
    ```
-   ANTHROPIC_API_KEY="sk-ant-..."
+   GEMINI_API_KEY="..."
    ```
+   Get one at https://aistudio.google.com/apikey. Never paste the key directly into chat —
+   only into `.env` (which is gitignored).
 4. Run migrations:
    ```bash
    npx prisma migrate dev
@@ -54,7 +56,7 @@ All vendor names and GSTINs are fictional but format-valid.
 ## What's built in Phase 1
 
 - Upload a PDF/PNG/JPG/WEBP (≤15 MB) via `POST /api/documents`
-- `ExtractionService` sends the document to Claude with the GST extraction system prompt
+- `ExtractionService` sends the document to Gemini with the GST extraction system prompt
   (`lib/extraction-prompt.ts`), validates the JSON response against a zod schema
   (`lib/extraction-schema.ts`), and retries once on malformed JSON
 - `ValidationService` (`lib/validation-service.ts`) runs the GST rules engine: GSTIN format,
@@ -79,7 +81,7 @@ All vendor names and GSTINs are fictional but format-valid.
 
 ## Privacy note
 
-Uploaded documents are sent to Anthropic's Claude API for extraction and are not sent to any
+Uploaded documents are sent to Google's Gemini API for extraction and are not sent to any
 other third party. Originals are stored on local disk in `UPLOAD_DIR` (S3-ready via
 `StorageService` — swap the implementation, not the callers). Document bytes and extracted PII
 are never written to logs.

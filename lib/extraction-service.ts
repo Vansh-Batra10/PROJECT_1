@@ -1,9 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import { EXTRACTION_SYSTEM_PROMPT } from "./extraction-prompt";
 import { extractionSchema, type Extraction } from "./extraction-schema";
 
-// Single place to swap the model (or swap the whole provider, e.g. for AWS Bedrock).
-export const EXTRACTION_MODEL = "claude-sonnet-4-5";
+// Single place to swap the model.
+export const EXTRACTION_MODEL = "gemini-2.5-pro";
 
 export interface ExtractionResult {
   parsed: Extraction;
@@ -23,84 +23,68 @@ function stripCodeFence(text: string): string {
 
 /**
  * ExtractionService abstracts the LLM provider so the rest of the app never talks
- * to Anthropic directly. Swap this implementation for Bedrock/another provider later
- * without touching callers.
+ * to Gemini directly. Swap this implementation for another provider later without
+ * touching callers.
  */
 export class ExtractionService {
-  private client: Anthropic;
+  private client: GoogleGenAI;
 
   constructor() {
-    this.client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not set.");
+    }
+    this.client = new GoogleGenAI({ apiKey });
   }
 
   async extract(input: ExtractionInput): Promise<ExtractionResult> {
-    const documentBlock = this.buildDocumentBlock(input);
+    const documentPart = this.buildDocumentPart(input);
+    const instructionPart = { text: "Extract this document into the required JSON schema. Output only JSON." };
 
-    const message = await this.client.messages.create({
-      model: EXTRACTION_MODEL,
-      max_tokens: 8192,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: [
-            documentBlock,
-            { type: "text", text: "Extract this document into the required JSON schema. Output only JSON." },
-          ],
-        },
-      ],
-    });
-
-    const textBlock = message.content.find((b) => b.type === "text");
-    const rawText = textBlock && textBlock.type === "text" ? textBlock.text : "";
-
+    const rawText = await this.generate([{ role: "user", parts: [documentPart, instructionPart] }]);
     let parsed = this.tryParse(rawText);
 
     if (!parsed) {
       // One retry: tell the model its previous output was invalid JSON.
-      const retry = await this.client.messages.create({
-        model: EXTRACTION_MODEL,
-        max_tokens: 8192,
-        system: EXTRACTION_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: [documentBlock, { type: "text", text: "Extract this document into the required JSON schema. Output only JSON." }],
-          },
-          { role: "assistant", content: rawText },
-          {
-            role: "user",
-            content:
-              "Your previous output was not valid JSON matching the schema. Return ONLY valid JSON, no prose, no markdown fences.",
-          },
-        ],
-      });
-      const retryText = retry.content.find((b) => b.type === "text");
-      const retryRaw = retryText && retryText.type === "text" ? retryText.text : "";
-      parsed = this.tryParse(retryRaw);
+      const retryText = await this.generate([
+        { role: "user", parts: [documentPart, instructionPart] },
+        { role: "model", parts: [{ text: rawText }] },
+        {
+          role: "user",
+          parts: [
+            {
+              text: "Your previous output was not valid JSON matching the schema. Return ONLY valid JSON, no prose, no markdown fences.",
+            },
+          ],
+        },
+      ]);
+      parsed = this.tryParse(retryText);
       if (!parsed) {
         throw new Error("Model did not return valid JSON after retry.");
       }
-      return { parsed, raw: this.safeJson(retryRaw), modelName: EXTRACTION_MODEL };
+      return { parsed, raw: this.safeJson(retryText), modelName: EXTRACTION_MODEL };
     }
 
     return { parsed, raw: this.safeJson(rawText), modelName: EXTRACTION_MODEL };
   }
 
-  private buildDocumentBlock(input: ExtractionInput): Anthropic.Messages.ContentBlockParam {
-    const base64 = input.fileBuffer.toString("base64");
-    if (input.mimeType === "application/pdf") {
-      return {
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: base64 },
-      };
-    }
+  private async generate(contents: Array<{ role: string; parts: Array<Record<string, unknown>> }>): Promise<string> {
+    const response = await this.client.models.generateContent({
+      model: EXTRACTION_MODEL,
+      contents,
+      config: {
+        systemInstruction: EXTRACTION_SYSTEM_PROMPT,
+        responseMimeType: "application/json",
+      },
+    });
+    return response.text ?? "";
+  }
+
+  private buildDocumentPart(input: ExtractionInput): Record<string, unknown> {
     return {
-      type: "image",
-      source: {
-        type: "base64",
-        media_type: input.mimeType as "image/png" | "image/jpeg" | "image/webp",
-        data: base64,
+      inlineData: {
+        mimeType: input.mimeType,
+        data: input.fileBuffer.toString("base64"),
       },
     };
   }
