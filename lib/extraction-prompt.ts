@@ -21,8 +21,10 @@ RULES:
 7. GSTIN is 15 characters. Transcribe exactly as printed; do not "correct" it.
 8. HSN/SAC: transcribe the code exactly (4/6/8 digits for HSN, 6 for SAC). If not printed for a
    line, set null. Never assign an HSN code yourself.
-9. For EVERY field you populate, assign a confidence 0..1 in field_confidence reflecting how
-   clearly it was readable (1 = crystal clear printed; lower for blurry/handwritten/ambiguous).
+9. For EVERY field you populate with a non-null value, assign a confidence 0..1 in
+   field_confidence reflecting how clearly it was readable (1 = crystal clear printed; lower for
+   blurry/handwritten/ambiguous). Do NOT add a field_confidence entry for a field you left null —
+   null already means "not present," it does not need a confidence score.
 10. overall_confidence = your honest overall reliability for this extraction.
 11. Put anything you were unsure about, or anything unusual (rotated page, partial scan,
     overlapping stamp, multiple invoices in one file) into extraction_notes.

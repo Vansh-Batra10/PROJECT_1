@@ -3,7 +3,7 @@ import { EXTRACTION_SYSTEM_PROMPT } from "./extraction-prompt";
 import { extractionSchema, type Extraction } from "./extraction-schema";
 
 // Single place to swap the model.
-export const EXTRACTION_MODEL = "gemini-2.5-pro";
+export const EXTRACTION_MODEL = "gemini-2.5-flash";
 
 export interface ExtractionResult {
   parsed: Extraction;

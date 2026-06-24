@@ -18,6 +18,16 @@ function sum(values: Array<number | null | undefined>): number {
   return values.reduce((acc: number, v) => acc + (v ?? 0), 0);
 }
 
+function getFieldValue(extraction: Extraction, path: string): unknown {
+  const segments = path.replace(/\[(\d+)\]/g, ".$1").split(".");
+  let current: unknown = extraction;
+  for (const segment of segments) {
+    if (current == null) return undefined;
+    current = (current as Record<string, unknown>)[segment];
+  }
+  return current;
+}
+
 export function runValidation(extraction: Extraction): ValidationFlag[] {
   const flags: ValidationFlag[] = [];
   const { supplier, buyer, totals, line_items, field_confidence } = extraction;
@@ -126,16 +136,22 @@ export function runValidation(extraction: Extraction): ValidationFlag[] {
     }
   }
 
-  // 8. Required-field presence
+  // 8. Required-field presence (purchase orders don't carry an invoice number/date or tax totals)
+  const isPurchaseOrder = extraction.document_type === "purchase_order";
   if (!supplier.name) flags.push({ field: "supplier.name", severity: "error", message: "Supplier name is missing." });
-  if (!extraction.invoice_number) flags.push({ field: "invoice_number", severity: "error", message: "Invoice number is missing." });
-  if (!extraction.invoice_date) flags.push({ field: "invoice_date", severity: "error", message: "Invoice date is missing." });
-  if (totals.grand_total == null) flags.push({ field: "totals.grand_total", severity: "error", message: "Grand total is missing." });
+  if (!isPurchaseOrder) {
+    if (!extraction.invoice_number) flags.push({ field: "invoice_number", severity: "error", message: "Invoice number is missing." });
+    if (!extraction.invoice_date) flags.push({ field: "invoice_date", severity: "error", message: "Invoice date is missing." });
+    if (totals.grand_total == null) flags.push({ field: "totals.grand_total", severity: "error", message: "Grand total is missing." });
+  } else if (!extraction.po_number) {
+    flags.push({ field: "po_number", severity: "error", message: "PO number is missing." });
+  }
   if (line_items.length === 0) flags.push({ field: "line_items", severity: "error", message: "No line items were extracted." });
 
-  // 9. Low-confidence fields
+  // 9. Low-confidence fields (skip fields that are legitimately absent — a null value
+  // with confidence 0 means "not present", not "uncertain".)
   for (const [field, confidence] of Object.entries(field_confidence)) {
-    if (confidence < 0.75) {
+    if (confidence < 0.75 && getFieldValue(extraction, field) != null) {
       flags.push({ field, severity: "warning", message: `Low confidence (${Math.round(confidence * 100)}%) — please verify.` });
     }
   }
