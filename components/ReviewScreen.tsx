@@ -152,22 +152,32 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
     }
   }
 
+  const statusLabel: Record<string, string> = {
+    uploaded: "Uploaded",
+    processing: "Processing",
+    extracted: "Extracted",
+    needs_review: "Needs review",
+    approved: "Approved",
+    exported: "Exported",
+    failed: "Failed",
+  };
+
   return (
-    <div className="flex flex-col h-screen">
-      <header className="flex items-center justify-between border-b px-4 py-2 bg-white">
+    <div className="flex h-full flex-col bg-background">
+      <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-3">
         <div>
-          <h1 className="text-base font-semibold">{fileName}</h1>
-          <p className="text-xs text-gray-500">
-            Status: <span className="font-medium">{docStatus}</span>
+          <h1 className="text-base font-semibold text-foreground">{fileName}</h1>
+          <p className="text-xs text-muted">
+            Status: <span className="font-medium text-foreground">{statusLabel[docStatus] ?? docStatus}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {saveMessage && <span className="text-xs text-green-700">{saveMessage}</span>}
-          {saveError && <span className="text-xs text-red-600">{saveError}</span>}
+          {saveMessage && <span className="text-xs text-success">{saveMessage}</span>}
+          {saveError && <span className="text-xs text-danger">{saveError}</span>}
           <button
             onClick={handleSave}
             disabled={saving || locked}
-            className="border rounded px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-40"
+            className="rounded-[var(--radius)] border border-border px-3 py-1.5 text-sm text-foreground hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -175,7 +185,7 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
             onClick={handleApprove}
             disabled={approving || locked || errorCount > 0}
             title={errorCount > 0 ? "Resolve all errors before approving" : undefined}
-            className="bg-black text-white rounded px-3 py-1.5 text-sm disabled:opacity-40"
+            className="rounded-[var(--radius)] bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
             {locked ? "Approved ✓" : approving ? "Approving…" : "Approve"}
           </button>
@@ -184,29 +194,29 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
       </header>
 
       {flags.length > 0 && (
-        <div className="border-b px-4 py-2 bg-amber-50 text-sm">
-          <p className="font-medium mb-1">
+        <div className="sticky top-0 z-10 border-b border-warning-border bg-warning-soft px-6 py-2.5 text-sm">
+          <p className="font-medium text-foreground">
             {flags.length} issue{flags.length === 1 ? "" : "s"} to check
-            {errorCount > 0 && <span className="text-red-700"> · {errorCount} error{errorCount === 1 ? "" : "s"}</span>}
-            {warningCount > 0 && <span className="text-amber-700"> · {warningCount} warning{warningCount === 1 ? "" : "s"}</span>}
+            {errorCount > 0 && <span className="text-danger"> · {errorCount} error{errorCount === 1 ? "" : "s"}</span>}
+            {warningCount > 0 && <span className="text-warning"> · {warningCount} warning{warningCount === 1 ? "" : "s"}</span>}
           </p>
-          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+          <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
             {flags.slice(0, 12).map((f, i) => (
-              <li key={i} className={f.severity === "error" ? "text-red-700" : "text-amber-700"}>
+              <li key={i} className={f.severity === "error" ? "text-danger" : "text-warning"}>
                 <span className="font-mono">{f.field}</span>: {f.message}
               </li>
             ))}
-            {flags.length > 12 && <li className="text-gray-500">+{flags.length - 12} more…</li>}
+            {flags.length > 12 && <li className="text-muted">+{flags.length - 12} more…</li>}
           </ul>
         </div>
       )}
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-1/2 border-r">
+        <div className="w-1/2 border-r border-border bg-surface">
           <DocumentPreviewPane fileUrl={fileUrl} mimeType={mimeType} />
         </div>
 
-        <div className="w-1/2 overflow-y-auto p-4 flex flex-col gap-6">
+        <div className="flex w-1/2 flex-col gap-6 overflow-y-auto bg-background p-6">
           <Section title="Header">
             <div className="grid grid-cols-2 gap-4">
               <PartyFields
@@ -269,12 +279,12 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
           </Section>
 
           <Section title="Line items">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-[var(--radius)] border border-border">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="text-left bg-gray-50">
+                  <tr className="sticky top-0 bg-background text-left text-muted">
                     {["#", "Description", "HSN/SAC", "Qty", "Unit", "Rate", "Taxable", "CGST%", "CGST", "SGST%", "SGST", "IGST%", "IGST", "Total", ""].map((h) => (
-                      <th key={h} className="py-1 px-1 font-medium">
+                      <th key={h} className="border-b border-border px-2 py-2 font-medium">
                         {h}
                       </th>
                     ))}
@@ -282,7 +292,7 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
                 </thead>
                 <tbody>
                   {extraction.line_items.map((li, idx) => (
-                    <tr key={idx} className="border-b align-top">
+                    <tr key={idx} className="border-b border-border align-top last:border-b-0 hover:bg-background/60">
                       <Cell field={`line_items[${idx}].serial_no`} flagsByField={flagsByField} confidenceOf={confidenceOf}>
                         <NumInput value={li.serial_no} onChange={(v) => setLineItemField(idx, "serial_no", v)} disabled={locked} />
                       </Cell>
@@ -325,16 +335,16 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
                       <Cell field={`line_items[${idx}].line_total`} flagsByField={flagsByField} confidenceOf={confidenceOf}>
                         <NumInput value={li.line_total} onChange={(v) => setLineItemField(idx, "line_total", v)} disabled={locked} />
                       </Cell>
-                      <td className="py-1 px-1 whitespace-nowrap">
+                      <td className="whitespace-nowrap px-2 py-1.5">
                         {!locked && (
-                          <div className="flex gap-1">
-                            <button onClick={() => moveLineItem(idx, -1)} disabled={idx === 0} className="text-gray-500 disabled:opacity-30" title="Move up">
+                          <div className="flex gap-1.5 text-muted">
+                            <button onClick={() => moveLineItem(idx, -1)} disabled={idx === 0} className="hover:text-foreground disabled:opacity-30" title="Move up">
                               ↑
                             </button>
-                            <button onClick={() => moveLineItem(idx, 1)} disabled={idx === extraction.line_items.length - 1} className="text-gray-500 disabled:opacity-30" title="Move down">
+                            <button onClick={() => moveLineItem(idx, 1)} disabled={idx === extraction.line_items.length - 1} className="hover:text-foreground disabled:opacity-30" title="Move down">
                               ↓
                             </button>
-                            <button onClick={() => removeLineItem(idx)} className="text-red-600" title="Delete row">
+                            <button onClick={() => removeLineItem(idx)} className="hover:text-danger" title="Delete row">
                               ✕
                             </button>
                           </div>
@@ -346,7 +356,7 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
               </table>
             </div>
             {!locked && (
-              <button onClick={addLineItem} className="mt-2 text-sm border rounded px-3 py-1 hover:bg-gray-50">
+              <button onClick={addLineItem} className="mt-2 rounded-[var(--radius)] border border-border px-3 py-1.5 text-sm text-foreground hover:bg-surface">
                 + Add line item
               </button>
             )}
@@ -371,8 +381,8 @@ export default function ReviewScreen({ documentId, fileName, mimeType, status, i
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section>
-      <h2 className="text-sm font-semibold mb-2 text-gray-700">{title}</h2>
+    <section className="card p-4">
+      <h2 className="mb-3 text-sm font-semibold text-foreground">{title}</h2>
       {children}
     </section>
   );
@@ -384,9 +394,9 @@ function fieldClasses(field: string, flagsByField: Map<string, ValidationFlag[]>
   const hasWarning = fieldFlags.some((f) => f.severity === "warning");
   const lowConfidence = confidence !== null && confidence < 0.75;
 
-  if (hasError) return "border-red-400 bg-red-50";
-  if (hasWarning || lowConfidence) return "border-amber-400 bg-amber-50";
-  return "border-gray-300";
+  if (hasError) return "border-danger-border bg-danger-soft";
+  if (hasWarning || lowConfidence) return "border-warning-border bg-warning-soft";
+  return "border-border";
 }
 
 function FieldMessages({ field, flagsByField }: { field: string; flagsByField: Map<string, ValidationFlag[]> }) {
@@ -395,7 +405,7 @@ function FieldMessages({ field, flagsByField }: { field: string; flagsByField: M
   return (
     <div className="mt-0.5 flex flex-col gap-0.5">
       {fieldFlags.map((f, i) => (
-        <p key={i} className={`text-[11px] ${f.severity === "error" ? "text-red-600" : "text-amber-600"}`}>
+        <p key={i} className={`text-[11px] ${f.severity === "error" ? "text-danger" : "text-warning"}`}>
           {f.message}
         </p>
       ))}
@@ -422,17 +432,17 @@ function TextField({
 }) {
   const confidence = confidenceOf(field);
   return (
-    <label className="text-xs flex flex-col gap-1">
-      <span className="text-gray-500 flex items-center gap-1">
+    <label className="flex flex-col gap-1 text-xs">
+      <span className="flex items-center gap-1 text-muted">
         {label}
         {confidence !== null && confidence < 0.75 && (
-          <span title={`Low confidence: ${Math.round(confidence * 100)}%`} className="text-amber-600">
+          <span title={`Low confidence: ${Math.round(confidence * 100)}%`} className="text-warning">
             ⚠
           </span>
         )}
       </span>
       <input
-        className={`border rounded px-2 py-1 text-sm ${fieldClasses(field, flagsByField, confidence)}`}
+        className={`rounded-[var(--radius)] border px-2.5 py-1.5 text-sm text-foreground ${fieldClasses(field, flagsByField, confidence)} disabled:cursor-not-allowed disabled:opacity-60`}
         value={value ?? ""}
         disabled={locked}
         onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}
@@ -461,18 +471,18 @@ function TotalField({
 }) {
   const confidence = confidenceOf(field);
   return (
-    <label className="text-xs flex flex-col gap-1">
-      <span className="text-gray-500 flex items-center gap-1">
+    <label className="flex flex-col gap-1 text-xs">
+      <span className="flex items-center gap-1 text-muted">
         {label}
         {confidence !== null && confidence < 0.75 && (
-          <span title={`Low confidence: ${Math.round(confidence * 100)}%`} className="text-amber-600">
+          <span title={`Low confidence: ${Math.round(confidence * 100)}%`} className="text-warning">
             ⚠
           </span>
         )}
       </span>
       <input
         type="number"
-        className={`border rounded px-2 py-1 text-sm ${fieldClasses(field, flagsByField, confidence)}`}
+        className={`tnum rounded-[var(--radius)] border px-2.5 py-1.5 text-right text-sm text-foreground ${fieldClasses(field, flagsByField, confidence)} disabled:cursor-not-allowed disabled:opacity-60`}
         value={value ?? ""}
         disabled={locked}
         onChange={(e) => onChange(toNumberOrNull(e.target.value))}
@@ -500,8 +510,8 @@ function PartyFields({
   locked: boolean;
 }) {
   return (
-    <div className="border rounded p-3 flex flex-col gap-2">
-      <h3 className="text-xs font-semibold text-gray-600">{label}</h3>
+    <div className="flex flex-col gap-2 rounded-[var(--radius)] border border-border bg-background p-3">
+      <h3 className="text-xs font-semibold text-muted">{label}</h3>
       <TextField label="Name" field={`${prefix}.name`} value={party.name} onChange={(v) => onChange("name", v)} flagsByField={flagsByField} confidenceOf={confidenceOf} locked={locked} />
       <TextField label="GSTIN" field={`${prefix}.gstin`} value={party.gstin} onChange={(v) => onChange("gstin", v)} flagsByField={flagsByField} confidenceOf={confidenceOf} locked={locked} />
       <TextField label="Address" field={`${prefix}.address`} value={party.address} onChange={(v) => onChange("address", v)} flagsByField={flagsByField} confidenceOf={confidenceOf} locked={locked} />
@@ -524,9 +534,11 @@ function Cell({
   children: React.ReactNode;
 }) {
   const confidence = confidenceOf(field);
+  const classes = fieldClasses(field, flagsByField, confidence);
+  const highlighted = classes.includes("bg-");
   return (
-    <td className={`py-1 px-1 ${wide ? "min-w-[140px]" : "min-w-[60px]"}`}>
-      <div className={`rounded ${fieldClasses(field, flagsByField, confidence).includes("bg-") ? fieldClasses(field, flagsByField, confidence) : ""}`}>
+    <td className={`px-1.5 py-1 ${wide ? "min-w-[160px]" : "min-w-[64px]"}`}>
+      <div className={`rounded-md ${highlighted ? `border ${classes}` : ""}`}>
         {children}
       </div>
       <FieldMessages field={field} flagsByField={flagsByField} />
@@ -538,7 +550,7 @@ function NumInput({ value, onChange, disabled }: { value: number | null; onChang
   return (
     <input
       type="number"
-      className="w-full border-0 bg-transparent px-1 py-0.5 text-xs focus:outline-1 focus:outline-gray-400 rounded"
+      className="tnum w-full rounded-md border-0 bg-transparent px-1.5 py-1 text-right text-xs text-foreground focus:outline-1 focus:outline-primary disabled:opacity-60"
       value={value ?? ""}
       disabled={disabled}
       onChange={(e) => onChange(toNumberOrNull(e.target.value))}
@@ -550,7 +562,7 @@ function TxtInput({ value, onChange, disabled }: { value: string | null; onChang
   return (
     <input
       type="text"
-      className="w-full border-0 bg-transparent px-1 py-0.5 text-xs focus:outline-1 focus:outline-gray-400 rounded"
+      className="w-full rounded-md border-0 bg-transparent px-1.5 py-1 text-xs text-foreground focus:outline-1 focus:outline-primary disabled:opacity-60"
       value={value ?? ""}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value === "" ? null : e.target.value)}

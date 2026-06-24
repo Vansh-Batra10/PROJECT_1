@@ -20,19 +20,19 @@ export default function DocumentPreviewPane({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between gap-2 border-b px-3 py-2 text-sm bg-gray-50">
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5 text-sm bg-surface">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
-            className="border rounded px-2 py-1 hover:bg-gray-100"
+            className="rounded-[var(--radius)] border border-border px-2 py-1 text-foreground hover:bg-background"
             aria-label="Zoom out"
           >
             −
           </button>
-          <span className="w-12 text-center">{Math.round(zoom * 100)}%</span>
+          <span className="tnum w-12 text-center text-foreground">{Math.round(zoom * 100)}%</span>
           <button
             onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
-            className="border rounded px-2 py-1 hover:bg-gray-100"
+            className="rounded-[var(--radius)] border border-border px-2 py-1 text-foreground hover:bg-background"
             aria-label="Zoom in"
           >
             +
@@ -43,17 +43,17 @@ export default function DocumentPreviewPane({
             <button
               onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
               disabled={pageNumber <= 1}
-              className="border rounded px-2 py-1 hover:bg-gray-100 disabled:opacity-40"
+              className="rounded-[var(--radius)] border border-border px-2 py-1 text-foreground hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
             >
               ← Prev
             </button>
-            <span>
+            <span className="tnum text-foreground">
               Page {pageNumber} / {numPages}
             </span>
             <button
               onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
               disabled={pageNumber >= numPages}
-              className="border rounded px-2 py-1 hover:bg-gray-100 disabled:opacity-40"
+              className="rounded-[var(--radius)] border border-border px-2 py-1 text-foreground hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next →
             </button>
@@ -61,13 +61,13 @@ export default function DocumentPreviewPane({
         )}
       </div>
 
-      <div className="flex-1 overflow-auto bg-gray-100 flex justify-center p-4">
+      <div className="flex-1 overflow-auto bg-background flex justify-center p-6">
         {isPdf ? (
           <Document
             file={fileUrl}
             onLoadSuccess={({ numPages: n }) => setNumPages(n)}
-            loading={<p className="text-sm text-gray-500">Loading document…</p>}
-            error={<p className="text-sm text-red-600">Failed to load PDF.</p>}
+            loading={<p className="text-sm text-muted">Loading document…</p>}
+            error={<p className="text-sm text-danger">Failed to load PDF.</p>}
           >
             <Page
               pageNumber={pageNumber}

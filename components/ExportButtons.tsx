@@ -31,7 +31,7 @@ export default function ExportButtons({ documentId, status }: { documentId: stri
         onClick={() => handleExport("xlsx")}
         disabled={!enabled || busy !== null}
         title={enabled ? undefined : "Approve the document before exporting"}
-        className="text-sm border rounded px-3 py-1.5 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="rounded-[var(--radius)] border border-border px-3 py-1.5 text-sm text-foreground hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
       >
         {busy === "xlsx" ? "Exporting…" : "Export .xlsx"}
       </button>
@@ -39,18 +39,18 @@ export default function ExportButtons({ documentId, status }: { documentId: stri
         onClick={() => handleExport("csv")}
         disabled={!enabled || busy !== null}
         title={enabled ? undefined : "Approve the document before exporting"}
-        className="text-sm border rounded px-3 py-1.5 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+        className="rounded-[var(--radius)] border border-border px-3 py-1.5 text-sm text-foreground hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
       >
         {busy === "csv" ? "Exporting…" : "Export .csv"}
       </button>
       <button
         disabled
         title="Coming soon"
-        className="text-sm border rounded px-3 py-1.5 opacity-40 cursor-not-allowed"
+        className="cursor-not-allowed rounded-[var(--radius)] border border-border px-3 py-1.5 text-sm text-muted opacity-50"
       >
         Tally XML (coming soon)
       </button>
-      {error && <span className="text-sm text-red-600">{error}</span>}
+      {error && <span className="text-sm text-danger">{error}</span>}
     </div>
   );
 }

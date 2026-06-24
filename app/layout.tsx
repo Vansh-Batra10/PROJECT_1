@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import TopNav from "@/components/TopNav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GST Invoice Extraction (MVP)",
+  title: "Ledgerly — GST Invoice Extraction",
   description: "Upload a GST invoice or PO and get a structured, validated extraction.",
 };
 
@@ -27,7 +28,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex h-screen flex-col overflow-hidden">
+        <TopNav />
+        <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
+      </body>
     </html>
   );
 }
